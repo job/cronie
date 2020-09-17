@@ -225,7 +225,12 @@ If the UID of the owner is 0 (root), the first character of a crontab
 entry can be "-" character. This will prevent cron from writing a syslog
 message about the command being executed.
 .PP
-The "sixth" field (the rest of the line) specifies the command to be run.
+The "sixth" field is are crontab options prefixing the command to be run.
+The "-n" option is an attempt to cure potentially copious volumes of mail
+coming from cron(8). When "-n" is specified, email is only send when the
+command exits with a non-zero exit code.
+.PP
+The "seventh" field (the rest of the line) specifies the command to be run.
 The entire command portion of the line, up to a newline or a "%"
 character, will be executed by /bin/sh or by the shell specified in the
 SHELL variable of the cronfile.  A "%" character in the command, unless
@@ -262,6 +267,8 @@ CRON_TZ=Japan
 0 22 * * 1-5    mail -s "It's 10pm" joe%Joe,%%Where are your kids?%
 23 0-23/2 * * * echo "run 23 minutes after midn, 2am, 4am ..., everyday"
 5 4 * * sun     echo "run at 5 after 4 every sunday"
+# make a daily backup, only email paul if backup_script exits non-zero
+4 20 * * *	-n $HOME/bin/backup_script
 .fi
 .SH Jobs in /etc/cron.d/
 The jobs in
