@@ -87,9 +87,9 @@ entry *load_entry(FILE * file, void (*error_func) (), struct passwd *pw,
 	 *
 	 * syntax:
 	 *   user crontab:
-	 *  minutes hours doms months dows cmd\n
+	 *  minutes hours doms months dows cmdoptions cmd\n
 	 *   system crontab (/etc/crontab):
-	 *  minutes hours doms months dows USERNAME cmd\n
+	 *  minutes hours doms months dows USERNAME cmdoptions cmd\n
 	 */
 
 	ecode_e ecode = e_none;
@@ -119,10 +119,13 @@ entry *load_entry(FILE * file, void (*error_func) (), struct passwd *pw,
 		goto eof;
 	}
 
-	/* check for '-' as a first character, this option will disable 
-	* writing a syslog message about command getting executed
-	*/
-	if (ch == '-') {
+	/* An optional series of '-'-prefixed flags in getopt style can
+	 * occur before the command.
+	 */
+	ch = get_char(file);
+	while (ch == '-') {
+		int flags = 0, loop = 1;
+		
 	/* if we are editing system crontab or user uid is 0 (root) 
 	* we are allowed to disable logging 
 	*/
