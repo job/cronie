@@ -119,13 +119,6 @@ entry *load_entry(FILE * file, void (*error_func) (), struct passwd *pw,
 		goto eof;
 	}
 
-	/* An optional series of '-'-prefixed flags in getopt style can
-	 * occur before the command.
-	 */
-	ch = get_char(file);
-	while (ch == '-') {
-		int flags = 0, loop = 1;
-		
 	/* if we are editing system crontab or user uid is 0 (root) 
 	* we are allowed to disable logging 
 	*/
@@ -393,6 +386,45 @@ entry *load_entry(FILE * file, void (*error_func) (), struct passwd *pw,
 	else
 		log_it("CRON", getpid(), "ERROR", "can't set USER", 0);
 #endif
+
+	/* An optional series of '-'-prefixed flags in getopt style can
+	 * occur before the command.
+	 */
+	ch = get_char(file);
+	while (ch == '-') {
+		int flags = 0, loop = 1;
+
+		while (loop) {
+                        switch (ch = get_char(file)) {
+                        case 'n':
+                                flags |= MAIL_WHEN_ERR;
+                                break;
+                        case 'q':
+                                flags |= DONT_LOG;
+                                break;
+			case ' ':
+			case '\t':
+				Skip_Blanks(ch, file)
+				loop = 0;
+				break;
+			case EOF:
+			case '\n':
+				ecode = e_cmd;
+				goto eof;
+			default:
+				ecode = e_flags;
+				goto eof;
+
+			}
+		}
+
+		if (flags == 0) {
+                        ecode = e_flags;
+                        goto eof;
+                }
+                e->flags |= flags;
+        }
+        unget_char(ch, file);
 
 	Debug(DPARS, ("load_entry()...about to parse command\n"));
 
